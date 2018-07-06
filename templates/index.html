@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+
+<title>Upload new File</title>
+
+<h1>Upload new File</h1>
+
+<form method="post" enctype="multipart/form-data">
+  <span>CSV File:</span>
+  <input type="file" name="csv_file"/>
+  <span>Conf File:</span>
+  <input type="file" name="conf_file"/>
+  <input type="submit" value="Upload"/>
+</form>
+
+<h3>Last run errors:</h3>
+
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class=flashes>
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+
+</html>
