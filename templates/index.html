@@ -5,7 +5,7 @@
 
 <h1>Upload new File</h1>
 
-<form method="post" enctype="multipart/form-data">
+<form action="/upload" method="post" enctype="multipart/form-data">
   <span>CSV File:</span>
   <input type="file" name="csv_file"/>
   <span>Conf File:</span>
@@ -16,7 +16,7 @@
 <h3>Files on server:</h3>
 
 
-<form method="post" enctype="multipart/form-data">
+<form action="/run" method="post" enctype="multipart/form-data">
 <h4>conf</h4>
 {% for conf_path in list_confs() %}
 <input type="radio" name="conf_path" id="option1" value="{{ conf_path }}"> {{ conf_path }} </input><br>
@@ -28,25 +28,35 @@
 <input type="submit" value="RUUUUNNN"/>
 </form>
 
-<h3>Runs:</h3>
-{% for csv_path in list_results() %}
-<p><a href="results/{{csv_path}}">{{ csv_path }}</a></p>
-{% endfor %}
+<h1>BASRDOK</h1>
 
-{%- for item in recursive %}
-<ul><a href="/public/results/{{ loop(item.children) }}">{{ loop(item.children) }}</a></ul>
-{% endfor %}
+<form class="box" method="post" action="" enctype="multipart/form-data">
+  <div class="box__input">
+    <input class="box__file" type="file" name="files[]" id="file" data-multiple-caption="{count} files selected" multiple />
+    <label for="file"><strong>Choose a file</strong><span class="box__dragndrop"> or drag it here</span>.</label>
+    <button class="box__button" type="submit">Upload</button>
+  </div>
+  <div class="box__uploading">Uploading&hellip;</div>
+  <div class="box__success">Done!</div>
+  <div class="box__error">Error! <span></span>.</div>
+</form>
 
+<h1>INTOOR</h1>
+<form action="/upload" method="post" enctype="multipart/form-data">
+  Select conf and csv files: <input type="file" name="confandcsv" multiple>
+  <input type="submit">
+</form>
 
-<input type="submit" value="Upload"/>
+<h1>RESULTS</h1>
 
-<h1>oh foos</h1>
-
+<ul>
 {% for file_name in list_results() %}
-    <ul><a href="/results/{{ file_name }}/">{{ file_name }}</a></ul>
-    <ul><a href="/results/{{ file_name }}/index.html">index.html</a></ul>
-    <ul><a href="/results/{{ file_name }}/errors.log">errors</a></ul>
+    <li><a href="/results/{{ file_name }}/">{{ file_name }}:</a></li>
+    <li><a href="/results/{{ file_name }}/index.html">index.html</a></li>
+    <li><a href="/results/{{ file_name }}/log.log">log</a></li>
+    <li><a href="/results/{{ file_name }}/errors.log">errors</a></li>
 {% endfor %}
+</ul>
 
 
 <h3>Last run errors:</h3>
@@ -83,3 +93,7 @@
 }
 
 </style>
+
+
+<iframe width="0" height="0" border="0" name="dummyframe" id="dummyframe"></iframe>
+

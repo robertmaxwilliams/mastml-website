@@ -2,12 +2,13 @@ from random import getrandbits
 from subprocess import run
 import traceback
 import os
-from os.path import join
+from os.path import join, splitext, basename
 
 #from MASTML import MASTMLDriver
 #from mastml import mastml
 from mastml import mastml
 from flask import Flask, flash, request, redirect, url_for, send_from_directory, render_template, abort, send_file
+import flask
 from werkzeug.utils import secure_filename
 
 UPLOAD_FOLDER = '/Users/max/Repos/mastml-website/public'
@@ -23,43 +24,36 @@ conf_dir = os.path.join(root, 'conf')
 def get_ext(filename):
     return filename.rsplit('.', 1)[1].lower()
 
-@app.route('/', methods=['GET', 'POST'])
-def upload_file():
-    if request.method == 'POST':
-        # check if the post request has the file part
-        if 'csv_file' in request.files and 'conf_file' in request.files:
-            csv_file  = request.files['csv_file']
-            conf_file = request.files['conf_file']
-            # if user does not select file, browser also submit an empty part without filename
-            if csv_file.filename == '' or conf_file.filename == '':
-                flash('A file is not selected')
-                return redirect(request.url)
-
-            if not csv_file or not conf_file:
-                flash('A file is false')
-                return redirect(request.url)
-
-            csv_filename  = secure_filename(csv_file.filename)
-            conf_filename = secure_filename(conf_file.filename)
-
-            # save to appropriate folder
-            csv_file.save(os.path.join(csv_dir, csv_filename))
-            conf_file.save(os.path.join(conf_dir, conf_filename))
-
-            do_run(conf_filename, csv_filename)
-
-        elif 'csv_path' in request.form and 'conf_path' in request.form:
-            csv_path = request.form['csv_path']
-            conf_path = request.form['conf_path']
-            do_run(os.path.join(conf_dir, conf_path), os.path.join(csv_dir, csv_path))
-            print("running from exising stuff", csv_path, conf_path)
-
+@app.route('/upload', methods=['GET','POST'])
+def upload():
+    print("UPLOADING AHHHHH")
+    print('files:', request.files.getlist("confandcsv"))
+    for f in request.files.getlist("confandcsv"):
+        filename = secure_filename(f.filename)
+        if splitext(basename(filename))[1] == '.csv':
+            savepath = csv_dir
+        elif splitext(basename(filename))[1] == '.conf':
+            savepath = conf_dir
         else:
-            print("request.files", request.files)
-            flash('Missing a file part')
-            return redirect(request.url)
-            
+            flash(f'file {filename} is not a .csv or .conf file, sorry for everything.')
+            continue
+        f.save(os.path.join(savepath, filename))
 
+    return redirect('/')
+
+@app.route('/run', methods=['POST'])
+def run2():
+    if 'csv_path' not in request.form or 'conf_path' not in request.form:
+        flash('You didnt send me no file names.')
+        return redirect(request.url)
+
+    csv_path = request.form['csv_path']
+    conf_path = request.form['conf_path']
+    do_run(os.path.join(conf_dir, conf_path), os.path.join(csv_dir, csv_path))
+    print("running from exising stuff", csv_path, conf_path)
+
+@app.route('/', methods=['GET'])
+def index():
     # GET request:
     return render_template('index.html')
 
@@ -89,21 +83,23 @@ def dir_listing(req_path):
     # Show directory contents
     #files = [os.path.join(os.path.relpath(abs_path, os.path.join(BASE_DIR, 'results')), x) for x in os.listdir(abs_path)]
     files = os.listdir(abs_path)
-    url_base = os.path.basename(abs_path) + '/'#os.path.relpath(abs_path, BASE_DIR)
+    url_base = os.path.basename(abs_path) #os.path.relpath(abs_path, BASE_DIR)
 
-    if url_base == 'results/':
+    if url_base == 'results':
         url_base = ''
 
+    better_files = [join(url_base, x) for x in files]
+    names = [os.path.basename(x) for x in better_files]
 
     print('\n============ AUGHGHGHGH ================')
     print('BASE_DIR:', BASE_DIR)
     print('abs_path:', abs_path)
     print('files:', files)
     print('url_base:', url_base)
-    print('\n============ AUGHGHGHGH ================')
+    print('better files:', better_files)
+    print('============ ENDENEDNEN ================')
 
-
-    return render_template('directory.html', files=files, base_dir=url_base)
+    return render_template('directory.html', zipped_file_and_name=zip(better_files, names))
 
 
 #@app.route('/results/<path:path>')
@@ -119,11 +115,18 @@ def list_confs():
 def list_csvs():
     return os.listdir(os.path.join(app.config['UPLOAD_FOLDER'], 'csv'))
 
+def only_item(ls):
+    if len(ls) == 0:
+        return ''
+    return ls[0]
+
 @app.template_global(name='list_results')
 def list_results():
     dir_to_list = os.path.join(app.config['UPLOAD_FOLDER'], 'results')
     rseults = os.listdir(dir_to_list)
-    return [os.path.join(x, os.listdir(join(dir_to_list, x))[0]) for x in rseults]
+    return [os.path.join(x, only_item(os.listdir(join(dir_to_list, x)))) for x in rseults]
+
+app.template_global(name='basename')(os.path.basename)
 
 def do_run(conf_filename, csv_filename):
     print('doing run: ', conf_filename, csv_filename)
@@ -132,6 +135,7 @@ def do_run(conf_filename, csv_filename):
     csv_dir = os.path.join(root, 'csv')
     conf_dir = os.path.join(root, 'conf')
     results_dir = os.path.join(root, 'results')
+    name = os.path.splitext(csv_filename)[0]
     if get_ext(csv_filename)!='csv' or get_ext(conf_filename)!='conf':
         flash('Bad file extension')
         return redirect(request.url)
@@ -143,11 +147,11 @@ def do_run(conf_filename, csv_filename):
     os.mkdir(unique_dir)
     # mastml does thisbcsv_file.save(os.path.join(unique_dir, csv_filename))
     # mastml does thisbconf_file.save(os.path.join(unique_dir, conf_filename))
+    name = os.path.join(unique_dir, name)
+    print('doing mastml run in ', name)
 
-    return_to = os.getcwd()
-    os.chdir(os.path.join(root, unique_dir)) # TODO: change how this works
     try:
-        mastml.main(conf_filename, csv_filename, './')
+        mastml.main(conf_filename, csv_filename, name)
     except Exception as e:
         print("mastml exception:", e)
         print(" ========= STACK TRACE =============== ")
@@ -155,7 +159,7 @@ def do_run(conf_filename, csv_filename):
         print(" ========= ENDDD TRACE =============== ")
 
     run(['zip', '-r', os.path.join(app.config['UPLOAD_FOLDER'], zip_filename), '.'])
-    os.chdir(return_to)
+
     return redirect(url_for('uploaded_file', filename=zip_filename))
 
 

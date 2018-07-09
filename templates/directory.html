@@ -1,7 +1,6 @@
-<base href="{{ base_dir }}">
 
 <ul>
-    {% for file in files %}
-    <li><a href="{{ file }}">{{ file }}</a></li>
+    {% for file, name in zipped_file_and_name %}
+    <li><a href="{{ file }}">{{ name }}</a></li>
     {% endfor %}
 </ul>
