@@ -43,8 +43,9 @@
 <h1>oh foos</h1>
 
 {% for file_name in list_results() %}
-    <ul><a href="/public/results/{{ file_name }}/index.html">{{ file_name }}</a></ul>
-    <ul><a href="/public/results/{{ file_name }}/errors.log">errors</a></ul>
+    <ul><a href="/results/{{ file_name }}/">{{ file_name }}</a></ul>
+    <ul><a href="/results/{{ file_name }}/index.html">index.html</a></ul>
+    <ul><a href="/results/{{ file_name }}/errors.log">errors</a></ul>
 {% endfor %}
 
 

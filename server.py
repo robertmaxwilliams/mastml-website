@@ -2,6 +2,7 @@ from random import getrandbits
 from subprocess import run
 import traceback
 import os
+from os.path import join
 
 #from MASTML import MASTMLDriver
 #from mastml import mastml
@@ -120,7 +121,9 @@ def list_csvs():
 
 @app.template_global(name='list_results')
 def list_results():
-    return os.listdir(os.path.join(app.config['UPLOAD_FOLDER'], 'results'))
+    dir_to_list = os.path.join(app.config['UPLOAD_FOLDER'], 'results')
+    rseults = os.listdir(dir_to_list)
+    return [os.path.join(x, os.listdir(join(dir_to_list, x))[0]) for x in rseults]
 
 def do_run(conf_filename, csv_filename):
     print('doing run: ', conf_filename, csv_filename)
