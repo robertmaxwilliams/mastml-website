@@ -13,6 +13,41 @@
   <input type="submit" value="Upload"/>
 </form>
 
+<h3>Files on server:</h3>
+
+
+<form method="post" enctype="multipart/form-data">
+<h4>conf</h4>
+{% for conf_path in list_confs() %}
+<input type="radio" name="conf_path" id="option1" value="{{ conf_path }}"> {{ conf_path }} </input><br>
+{% endfor %}
+<h4>csv</h4>
+{% for csv_path in list_csvs() %}
+<input type="radio" name="csv_path" id="option2" value="{{ csv_path }}"> {{ csv_path }} </input><br>
+{% endfor %}
+<input type="submit" value="RUUUUNNN"/>
+</form>
+
+<h3>Runs:</h3>
+{% for csv_path in list_results() %}
+<p><a href="results/{{csv_path}}">{{ csv_path }}</a></p>
+{% endfor %}
+
+{%- for item in recursive %}
+<ul><a href="/public/results/{{ loop(item.children) }}">{{ loop(item.children) }}</a></ul>
+{% endfor %}
+
+
+<input type="submit" value="Upload"/>
+
+<h1>oh foos</h1>
+
+{% for file_name in list_results() %}
+    <ul><a href="/public/results/{{ file_name }}/index.html">{{ file_name }}</a></ul>
+    <ul><a href="/public/results/{{ file_name }}/errors.log">errors</a></ul>
+{% endfor %}
+
+
 <h3>Last run errors:</h3>
 
 {% with messages = get_flashed_messages() %}
@@ -26,3 +61,24 @@
 {% endwith %}
 
 </html>
+
+<style>
+
+
+
+.double {
+  zoom: 2;
+  transform: scale(2);
+  -ms-transform: scale(2);
+  -webkit-transform: scale(2);
+  -o-transform: scale(2);
+  -moz-transform: scale(2);
+  transform-origin: 0 0;
+  -ms-transform-origin: 0 0;
+  -webkit-transform-origin: 0 0;
+  -o-transform-origin: 0 0;
+  -moz-transform-origin: 0 0;
+  -webkit-transform-origin: 0 0;
+}
+
+</style>
