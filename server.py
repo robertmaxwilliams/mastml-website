@@ -196,11 +196,11 @@ def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 
-@app.route('/stream2/<filename>')
+@app.route('/stream2/<path:filename>')
 def steam_html(filename):
     return render_template('stream.html', filename=url_for('stream/' + filename))
 
-@app.route('/stream/<filename>')
+@app.route('/stream/<path:filename>')
 def stream():
     def generate(filename):
         filname = relpath(app.config['UPLOAD_FOLDER'], filename)
