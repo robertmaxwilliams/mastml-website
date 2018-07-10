@@ -50,11 +50,29 @@
 <h1>RESULTS</h1>
 
 <ul>
-{% for file_name in list_results() %}
+{% for file_name, status in list_results_and_status() %}
     <li><a href="/results/{{ file_name }}/">{{ file_name }}:</a></li>
-    <li><a href="/results/{{ file_name }}/index.html">index.html</a></li>
-    <li><a href="/results/{{ file_name }}/log.log">log</a></li>
-    <li><a href="/results/{{ file_name }}/errors.log">errors</a></li>
+    <ul>
+
+        {% if status['index'] %}
+            <li><a  href="/results/{{ file_name }}/index.html">index.html</a></li>
+        {% endif %}
+
+        {% if status['log'] %}
+            <li><a  href="/results/{{ file_name }}/log.log">log</a></li>
+        {% endif %}
+
+        {% if status['errors'] %}
+            <li><a  href="/results/{{ file_name }}/errors.log">errors</a></li>
+        {% endif %}
+
+    <!-- debug only
+    {% for key in status %}
+        <li>{{ key }} : {{ status[key] }}</li> 
+    {% endfor %}
+    --!>
+    </ul>
+
 {% endfor %}
 </ul>
 

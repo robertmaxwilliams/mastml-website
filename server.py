@@ -20,8 +20,11 @@ app.secret_key = "super secret key"
 root = app.config['UPLOAD_FOLDER']
 csv_dir = os.path.join(root, 'csv')
 conf_dir = os.path.join(root, 'conf')
+results_dir = os.path.join(root, 'results')
+zip_dir = os.path.join(root, 'zip')
 
 def get_ext(filename):
+    return splitext(filename)[1]
     return filename.rsplit('.', 1)[1].lower()
 
 @app.route('/upload', methods=['GET','POST'])
@@ -32,7 +35,7 @@ def upload():
         filename = secure_filename(f.filename)
         if splitext(basename(filename))[1] == '.csv':
             savepath = csv_dir
-        elif splitext(basename(filename))[1] == '.conf':
+        elif splitext(basename(filename))[0] == '.conf':
             savepath = conf_dir
         else:
             flash(f'file {filename} is not a .csv or .conf file, sorry for everything.')
@@ -45,12 +48,14 @@ def upload():
 def run2():
     if 'csv_path' not in request.form or 'conf_path' not in request.form:
         flash('You didnt send me no file names.')
+        return redirect('/')
         return redirect(request.url)
 
     csv_path = request.form['csv_path']
     conf_path = request.form['conf_path']
     do_run(os.path.join(conf_dir, conf_path), os.path.join(csv_dir, csv_path))
     print("running from exising stuff", csv_path, conf_path)
+    return redirect('/')
 
 @app.route('/', methods=['GET'])
 def index():
@@ -120,24 +125,45 @@ def only_item(ls):
         return ''
     return ls[0]
 
-@app.template_global(name='list_results')
-def list_results():
-    dir_to_list = os.path.join(app.config['UPLOAD_FOLDER'], 'results')
-    rseults = os.listdir(dir_to_list)
-    return [os.path.join(x, only_item(os.listdir(join(dir_to_list, x)))) for x in rseults]
+@app.template_global(name='list_results_and_status')
+def list_results_and_status():
+    basedir = join(app.config['UPLOAD_FOLDER'], 'results')
+    contents = os.listdir(basedir)
+    contents = [join(x, only_item(os.listdir(join(basedir, x)))) for x in contents]
+    statuses = list()
+    for path in contents:
+        status = dict()
+        status['index'] = os.path.exists(join(results_dir, path, 'index.html'))
+        status['errors'] = os.path.exists(join(results_dir, path, 'error.log'))
+        status['log'] = os.path.exists(join(results_dir, path, 'log.log'))
+        statuses.append(status)
+
+    print(contents)
+    return zip(contents, statuses)
+
 
 app.template_global(name='basename')(os.path.basename)
+
+def mastml_main(conf, csv, savedir, zip_path):
+    try:
+        print(f'RUNNING MSATML ON {conf_filename} ON {csv_filename} SAVING TO {name}')
+        mastml.main(conf, csv, savedir)
+    except Exception as e:
+        print("mastml exception:", e)
+        print(" ========= STACK TRACE =============== ")
+        traceback.print_exc()
+        print(" ========= ENDDD TRACE =============== ")
+
+    run(['zip', '-r', zip_path, '.'])
 
 def do_run(conf_filename, csv_filename):
     print('doing run: ', conf_filename, csv_filename)
 
-    root = app.config['UPLOAD_FOLDER']
-    csv_dir = os.path.join(root, 'csv')
-    conf_dir = os.path.join(root, 'conf')
-    results_dir = os.path.join(root, 'results')
-    name = os.path.splitext(csv_filename)[0]
-    if get_ext(csv_filename)!='csv' or get_ext(conf_filename)!='conf':
+    name = basename(splitext(csv_filename)[0])
+
+    if get_ext(csv_filename)!='.csv' or get_ext(conf_filename)!='.conf':
         flash('Bad file extension')
+        print('Bad file extension')
         return redirect(request.url)
 
 
@@ -150,17 +176,11 @@ def do_run(conf_filename, csv_filename):
     name = os.path.join(unique_dir, name)
     print('doing mastml run in ', name)
 
-    try:
-        mastml.main(conf_filename, csv_filename, name)
-    except Exception as e:
-        print("mastml exception:", e)
-        print(" ========= STACK TRACE =============== ")
-        traceback.print_exc()
-        print(" ========= ENDDD TRACE =============== ")
+    mastml_args = (conf_filename, csv_filename, name, join(zip_dir, zip_filename))
+    p = Process(target=mastml_main, args=mastml_args)
+    p.start()
 
-    run(['zip', '-r', os.path.join(app.config['UPLOAD_FOLDER'], zip_filename), '.'])
-
-    return redirect(url_for('uploaded_file', filename=zip_filename))
+    return redirect('/')
 
 
 @app.route('/uploads/<filename>')
