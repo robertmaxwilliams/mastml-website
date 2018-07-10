@@ -3,7 +3,7 @@ from subprocess import run
 import traceback
 import os
 import time
-from os.path import join, splitext, basename, exists
+from os.path import join, splitext, basename, exists, relpath
 from multiprocessing import Process
 
 #from MASTML import MASTMLDriver
@@ -194,3 +194,19 @@ def do_run(conf_filename, csv_filename):
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+
+@app.route('/stream2/<filename>')
+def steam_html():
+    return render_template('stream.html', filename=url_for('stream/' + filename))
+
+@app.route('/stream/<filename>')
+def stream():
+    def generate():
+        filname = relpath(app.config['UPLOAD_FOLDER'], filename)
+        with open(filename) as f:
+            while True:
+                yield f.read()
+                sleep(1)
+
+    return app.response_class(generate(), mimetype='text/plain')
