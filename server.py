@@ -2,6 +2,7 @@ from random import getrandbits
 from subprocess import run
 import traceback
 import os
+import time
 from os.path import join, splitext, basename, exists
 from multiprocessing import Process
 
@@ -174,7 +175,7 @@ def do_run(conf_filename, csv_filename):
         return redirect(request.url)
 
 
-    h = f'{getrandbits(128):032x}'
+    h = int(time.time()*10)//(10**4) #f'{getrandbits(128):032x}'
     zip_filename = h + '.zip'
     unique_dir = os.path.join(results_dir, h)
     os.mkdir(unique_dir)
