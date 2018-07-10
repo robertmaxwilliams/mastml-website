@@ -13,7 +13,7 @@ from flask import Flask, flash, request, redirect, url_for, send_from_directory,
 import flask
 from werkzeug.utils import secure_filename
 
-UPLOAD_FOLDER = '/Users/max/Repos/mastml-website/public'
+UPLOAD_FOLDER = os.path.abspath('./public')
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -36,7 +36,7 @@ def upload():
         filename = secure_filename(f.filename)
         if splitext(basename(filename))[1] == '.csv':
             savepath = csv_dir
-        elif splitext(basename(filename))[0] == '.conf':
+        elif splitext(basename(filename))[1] == '.conf':
             savepath = conf_dir
         else:
             flash(f'file {filename} is not a .csv or .conf file, sorry for everything.')
@@ -175,7 +175,7 @@ def do_run(conf_filename, csv_filename):
         return redirect(request.url)
 
 
-    h = int(time.time()*10)//(10**4) #f'{getrandbits(128):032x}'
+    h = str(int(time.time()*10)//(10**4)) #f'{getrandbits(128):032x}'
     zip_filename = h + '.zip'
     unique_dir = os.path.join(results_dir, h)
     os.mkdir(unique_dir)
