@@ -1,9 +1,9 @@
 <!doctype html>
 <html>
 
-<title>Upload new File</title>
+<title>MASTML WEB INTEFACE</title>
 
-<h1>Upload new File</h1>
+<h1>Upload new Files</h1>
 
 <form action="/upload" method="post" enctype="multipart/form-data">
   <span>CSV File:</span>
@@ -13,7 +13,7 @@
   <input type="submit" value="Upload"/>
 </form>
 
-<h3>Files on server:</h3>
+<h3>Create a Run:</h3>
 
 
 <form action="/run" method="post" enctype="multipart/form-data">
@@ -26,25 +26,6 @@
 <input type="radio" name="csv_path" id="option2" value="{{ csv_path }}"> {{ csv_path }} </input><br>
 {% endfor %}
 <input type="submit" value="RUUUUNNN"/>
-</form>
-
-<h1>BASRDOK</h1>
-
-<form class="box" method="post" action="" enctype="multipart/form-data">
-  <div class="box__input">
-    <input class="box__file" type="file" name="files[]" id="file" data-multiple-caption="{count} files selected" multiple />
-    <label for="file"><strong>Choose a file</strong><span class="box__dragndrop"> or drag it here</span>.</label>
-    <button class="box__button" type="submit">Upload</button>
-  </div>
-  <div class="box__uploading">Uploading&hellip;</div>
-  <div class="box__success">Done!</div>
-  <div class="box__error">Error! <span></span>.</div>
-</form>
-
-<h1>INTOOR</h1>
-<form action="/upload" method="post" enctype="multipart/form-data">
-  Select conf and csv files: <input type="file" name="confandcsv" multiple>
-  <input type="submit">
 </form>
 
 <h1>RESULTS</h1>
