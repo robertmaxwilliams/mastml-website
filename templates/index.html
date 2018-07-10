@@ -5,12 +5,9 @@
 
 <h2>Upload new Files</h2>
 
-<form action="/upload" method="post" enctype="multipart/form-data">
-  <span>CSV File:</span>
-  <input type="file" name="csv_file"/>
-  <span>Conf File:</span>
-  <input type="file" name="conf_file"/>
-  <input type="submit" value="Upload"/>
+<form action="/upload" method="post" enctype="multipart/form-data">	
+  Select conf and csv files: <input type="file" name="confandcsv" multiple>	
+  <input type="submit">	
 </form>
 
 <h2>Create a Run:</h2>
