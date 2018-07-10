@@ -3,7 +3,7 @@
 
 <title>MASTML WEB INTEFACE</title>
 
-<h1>Upload new Files</h1>
+<h2>Upload new Files</h2>
 
 <form action="/upload" method="post" enctype="multipart/form-data">
   <span>CSV File:</span>
@@ -13,7 +13,7 @@
   <input type="submit" value="Upload"/>
 </form>
 
-<h3>Create a Run:</h3>
+<h2>Create a Run:</h2>
 
 
 <form action="/run" method="post" enctype="multipart/form-data">
@@ -28,12 +28,20 @@
 <input type="submit" value="RUUUUNNN"/>
 </form>
 
-<h1>RESULTS</h1>
+<h2>RESULTS</h2>
 
 <ul>
 {% for file_name, status in list_results_and_status() %}
     <li><a href="/results/{{ file_name }}/">{{ file_name }}:</a></li>
     <ul>
+
+        {% if status['loading'] %}
+            <div class="spinner"><a>LOADING</a></div>
+        {% endif %}
+
+        {% if status['zip'] %}
+            <li><a  href="/results/{{ file_name }}.zip">zip</a></li>
+        {% endif %}
 
         {% if status['index'] %}
             <li><a  href="/results/{{ file_name }}/index.html">index.html</a></li>
@@ -44,7 +52,7 @@
         {% endif %}
 
         {% if status['errors'] %}
-            <li><a  href="/results/{{ file_name }}/errors.log">errors</a></li>
+            <li><a {% if status['errors'] %} class="failure" {% endif %} href="/results/{{ file_name }}/errors.log">errors</a></li>
         {% endif %}
 
     <!-- debug only
@@ -53,6 +61,7 @@
     {% endfor %}
     --!>
     </ul>
+    <br>
 
 {% endfor %}
 </ul>
@@ -90,6 +99,82 @@
   -moz-transform-origin: 0 0;
   -webkit-transform-origin: 0 0;
 }
+
+
+/* 
+  thank you W3 schools! 
+  https://www.w3schools.com/howto/howto_css_loader.asp
+*/
+
+.loader {
+    border: 16px solid #f3f3f3; /* Light grey */
+    border-top: 16px solid #3498db; /* Blue */
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    animation: spinn 2s linear infinite;
+}
+
+.spinme {
+    border: 16px solid #f3f3f3; /* Light grey */
+    border-top: 16px solid #3498db; /* Blue */
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    animation: spin 2s linear infinite;
+}
+
+.spinner {
+  animation-name: spin, depth;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-duration: 3s;
+  text-align: left;
+  transform-origin: top left+5em;
+}
+@keyframes spin {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(-360deg); }
+}
+@keyframes depth {
+  0 { text-shadow: 0 0 black; }
+ /* 5% { transform: rotate(0deg); } */
+  25% { text-shadow: 1px 0 black, 2px 0 black, 3px 0 black, 4px 0 black, 5px 0 black; }
+  50% { text-shadow: 0 0 black; }
+/*  55% { transform: rotate(360deg); } */
+  75% { text-shadow: -1px 0 black, -2px 0 black, -3px 0 black, -4px 0 black, -5px 0 black; }
+  100% { text-shadow: 0 0 black; }
+}
+
+@keyframes spinn {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+
+.red {
+  background-color: #DB7093;
+}
+.failure {
+  background-color: #fff;
+  animation-name: color;
+  animation-duration: 2s;
+  animation-iteration-count: infinite;
+}
+
+@keyframes color {
+  0% {
+    background-color: #fff;
+  }
+  50% {
+    background-color: #ff0000;
+  }
+  100 {
+    background-color: #fff;
+  }
+}
+
+
 
 </style>
 

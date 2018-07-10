@@ -2,7 +2,8 @@ from random import getrandbits
 from subprocess import run
 import traceback
 import os
-from os.path import join, splitext, basename
+from os.path import join, splitext, basename, exists
+from multiprocessing import Process
 
 #from MASTML import MASTMLDriver
 #from mastml import mastml
@@ -21,7 +22,6 @@ root = app.config['UPLOAD_FOLDER']
 csv_dir = os.path.join(root, 'csv')
 conf_dir = os.path.join(root, 'conf')
 results_dir = os.path.join(root, 'results')
-zip_dir = os.path.join(root, 'zip')
 
 def get_ext(filename):
     return splitext(filename)[1]
@@ -129,13 +129,17 @@ def only_item(ls):
 def list_results_and_status():
     basedir = join(app.config['UPLOAD_FOLDER'], 'results')
     contents = os.listdir(basedir)
-    contents = [join(x, only_item(os.listdir(join(basedir, x)))) for x in contents]
+    contents = [join(x, only_item(os.listdir(join(basedir, x)))) for x in contents if os.path.isdir(join(basedir, x))]
     statuses = list()
     for path in contents:
         status = dict()
-        status['index'] = os.path.exists(join(results_dir, path, 'index.html'))
-        status['errors'] = os.path.exists(join(results_dir, path, 'error.log'))
-        status['log'] = os.path.exists(join(results_dir, path, 'log.log'))
+        status['index'] = exists(join(results_dir, path, 'index.html'))
+        status['errors'] = (exists(join(results_dir, path, 'errors.log'))
+                            and len(open(join(results_dir, path, 'errors.log')).read()) > 6)
+        status['log'] = exists(join(results_dir, path, 'log.log'))
+        status['zip'] = exists(join(results_dir, path) + '.zip')
+        status['loading'] = not status['zip']
+        status['failed'] = exists(join(results_dir, path, 'FAILED'))
         statuses.append(status)
 
     print(contents)
@@ -144,17 +148,20 @@ def list_results_and_status():
 
 app.template_global(name='basename')(os.path.basename)
 
-def mastml_main(conf, csv, savedir, zip_path):
+def mastml_main(conf, csv, savedir, zip_source, zip_target):
+    print("========= BEGIN RUN =======")
     try:
-        print(f'RUNNING MSATML ON {conf_filename} ON {csv_filename} SAVING TO {name}')
+        print(f'RUNNING MSATML ON {conf} ON {csv} SAVING TO {zip_target}')
         mastml.main(conf, csv, savedir)
     except Exception as e:
         print("mastml exception:", e)
         print(" ========= STACK TRACE =============== ")
         traceback.print_exc()
         print(" ========= ENDDD TRACE =============== ")
+        open(join(savedir, 'FAILED'), 'a').close()
 
-    run(['zip', '-r', zip_path, '.'])
+    run(['zip', '-q', '-r', savedir, '.'])
+    print("========= ENDDD RUN =======")
 
 def do_run(conf_filename, csv_filename):
     print('doing run: ', conf_filename, csv_filename)
@@ -171,14 +178,14 @@ def do_run(conf_filename, csv_filename):
     zip_filename = h + '.zip'
     unique_dir = os.path.join(results_dir, h)
     os.mkdir(unique_dir)
-    # mastml does thisbcsv_file.save(os.path.join(unique_dir, csv_filename))
-    # mastml does thisbconf_file.save(os.path.join(unique_dir, conf_filename))
+
     name = os.path.join(unique_dir, name)
     print('doing mastml run in ', name)
 
-    mastml_args = (conf_filename, csv_filename, name, join(zip_dir, zip_filename))
+    mastml_args = (conf_filename, csv_filename, name, name, join(results_dir, zip_filename))
     p = Process(target=mastml_main, args=mastml_args)
     p.start()
+    #p.join()
 
     return redirect('/')
 
