@@ -3,10 +3,10 @@
     var output = document.getElementById('output');
 
     var xhr = new XMLHttpRequest();
-    xhr.open('GET', '{{ url_for('stream/' + filename) }}');
+    xhr.open('GET', '{{ url }}');
     xhr.send();
 
     setInterval(function() {
         output.textContent = xhr.responseText;
-    }, 1000);
+    }, 100);
 </script>

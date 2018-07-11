@@ -1,4 +1,4 @@
-from random import getrandbits
+
 from subprocess import run
 import traceback
 import os
@@ -123,27 +123,35 @@ def list_csvs():
 
 def only_item(ls):
     if len(ls) == 0:
-        return ''
+        return None
     return ls[0]
+
+def only_subdir(path):
+    for fd in os.listdir(path):
+        print('fd:',fd)
+        if os.path.isdir(join(path, fd)):
+            return join(path, fd)
 
 @app.template_global(name='list_results_and_status')
 def list_results_and_status():
     basedir = join(app.config['UPLOAD_FOLDER'], 'results')
     contents = os.listdir(basedir)
-    contents = [join(x, only_item(os.listdir(join(basedir, x)))) for x in contents if os.path.isdir(join(basedir, x))]
+    contents = [join(x, only_subdir(join(basedir, x))) for x in contents if only_subdir(join(basedir, x)) is not None]
+    contents = sorted(contents)[::-1]
     statuses = list()
     for path in contents:
         status = dict()
-        status['index'] = exists(join(results_dir, path, 'index.html'))
-        status['errors'] = (exists(join(results_dir, path, 'errors.log'))
-                            and len(open(join(results_dir, path, 'errors.log')).read()) > 6)
-        status['log'] = exists(join(results_dir, path, 'log.log'))
-        status['zip'] = exists(join(results_dir, path) + '.zip')
+        status['index'] = exists(join(path, 'index.html'))
+        status['errors'] = (exists(join(path, 'errors.log'))
+                            and len(open(join(path, 'errors.log')).read()) > 6)
+        status['log'] = exists(join(path, 'log.log'))
+        status['zip'] = exists(join(path) + '.zip')
         status['loading'] = not status['zip']
-        status['failed'] = exists(join(results_dir, path, 'FAILED'))
+        status['failed'] = exists(join(path, 'FAILED'))
         statuses.append(status)
+    contents = [relpath(x, results_dir) for x in contents]
 
-    print(contents)
+    print('sttatus contenets:', contents)
     return zip(contents, statuses)
 
 
@@ -153,7 +161,7 @@ def mastml_main(conf, csv, savedir, zip_source, zip_target):
     print("========= BEGIN RUN =======")
     try:
         print(f'RUNNING MSATML ON {conf} ON {csv} SAVING TO {zip_target}')
-        mastml.main(conf, csv, savedir)
+        mastml.main(conf, csv, savedir, -2)
     except Exception as e:
         print("mastml exception:", e)
         print(" ========= STACK TRACE =============== ")
@@ -175,7 +183,7 @@ def do_run(conf_filename, csv_filename):
         return redirect(request.url)
 
 
-    h = str(int(time.time()*10)//(10**4)) #f'{getrandbits(128):032x}'
+    h = str(int(time.time()*10)%(10**13)) #f'{getrandbits(128):032x}'
     zip_filename = h + '.zip'
     unique_dir = os.path.join(results_dir, h)
     os.mkdir(unique_dir)
@@ -198,15 +206,25 @@ def uploaded_file(filename):
 
 @app.route('/stream2/<path:filename>')
 def steam_html(filename):
-    return render_template('stream.html', filename=url_for('stream/' + filename))
+    return render_template('stream.html', url=url_for('stream', filename=filename))
 
 @app.route('/stream/<path:filename>')
-def stream():
-    def generate(filename):
-        filname = relpath(app.config['UPLOAD_FOLDER'], filename)
+def stream(filename):
+    print('streaming', filename)
+    print('relpath:', join(app.config['UPLOAD_FOLDER'], filename))
+    filename = join(app.config['UPLOAD_FOLDER'], filename)
+    if not os.path.exists(filename):
+        return abort(404)
+    def generate():
         with open(filename) as f:
+            last = ''
             while True:
-                yield f.read()
-                sleep(1)
+                line = f.read()
 
-    return app.response_class(generate(), mimetype='text/plain')
+                if line != last:
+                    print('yielding file!', line[-20:])
+                    yield line
+                last = line
+                time.sleep(0.1)
+
+    return app.response_class(generate(), mimetype='text/event-stream')#mimetype='text/plain')
